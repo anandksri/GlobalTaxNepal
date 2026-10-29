@@ -188,8 +188,9 @@
 .notice.error, .storage-warning { border-color: #f0d7d9; color: #9b444c; background: #fff9f9; }
 .storage-warning { position: relative; top: auto; right: auto; max-width: 100%; margin: 12px auto 0; width: min(1120px, calc(100% - 48px)); }
 .notice button, .storage-warning button { margin-left: auto; padding: 1px; display: grid; place-items: center; border: 0; color: inherit; background: transparent; }
-.app-footer { min-height: 48px; padding: 0 max(24px, calc((100% - 1120px) / 2)); display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--line); color: #777688; background: #fff; font-size: 10px; }
-.footer-dot { padding: 0 4px; color: #c3c2cd; }
+.app-footer { min-height: 52px; padding: 0 max(24px, calc((100% - 1120px) / 2)); display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--line); color: #777688; background: #fff; font-size: 12px; }
+.app-footer a { color: #6252a9; text-decoration: none; }
+.app-footer a:hover { color: var(--purple-dark); text-decoration: underline; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 920px) {
@@ -232,7 +233,7 @@
   .sort-field { grid-column: 1 / -1; justify-content: flex-end; }
   .history-summary { align-items: flex-start; flex-direction: column; padding: 10px 13px; gap: 8px; }
   .history-summary > div { width: 100%; justify-content: space-between; }
-  .app-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 15px; gap: 4px; }
+  .app-footer { min-height: 48px; flex-direction: row; align-items: center; justify-content: space-between; padding: 9px 15px; gap: 8px; font-size: 10px; }
 }
 @media (max-width: 390px) {
   .topbar-inner { padding-inline: 12px; column-gap: 6px; }

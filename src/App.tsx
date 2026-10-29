@@ -301,7 +301,17 @@ function App() {
           onPrint={() => setNotice({ kind: 'success', text: 'Use “Save as PDF” in the print dialog to download a PDF.' })}
         />
       )}
-      <footer className="app-footer no-print"><span>Global Tax Nepal billing</span><span>Saved locally in this browser <span className="footer-dot">·</span> No account required</span></footer>
+      <footer className="app-footer no-print">
+        <span>Global Tax Nepal</span>
+        <a
+          href="https://anandkeshari.com.np"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visit Anand Keshari’s website (opens in a new tab)"
+        >
+          Developed By Anand Keshari
+        </a>
+      </footer>
     </div>
   )
 }
