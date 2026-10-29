@@ -54,7 +54,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
   return (
     <main className="page-shell history-page">
       <div className="page-heading">
-        <div><p className="eyebrow">YOUR RECORDS</p><h1>Document history</h1><p>All your bills and vouchers, saved in this browser.</p></div>
+        <div><p className="eyebrow">YOUR BILLING DESK</p><h1>Document history</h1><p>Bills and vouchers you’ve saved, gathered in one place.</p></div>
         <div className="history-count"><strong>{documents.length}</strong><span>{documents.length === 1 ? 'document' : 'documents'} saved</span></div>
       </div>
       <section className="history-panel">
@@ -91,7 +91,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
             </table>
           </div>
         ) : (
-          <div className="empty-state"><span className="empty-icon"><FileClock size={23} /></span><h2>{documents.length ? 'No matching documents' : 'No documents yet'}</h2><p>{documents.length ? 'Try adjusting your search or filters.' : 'Your saved bills and vouchers will appear here.'}</p></div>
+          <div className="empty-state"><span className="empty-icon"><FileClock size={23} /></span><h2>{documents.length ? 'No matching documents' : 'Nothing here just yet'}</h2><p>{documents.length ? 'Try a different search or widen the date range.' : 'Once you save a bill or voucher, you’ll find it here.'}</p></div>
         )}
         {filtered.length > 0 && <div className="history-bottom"><Download size={14} /> Export a JSON backup any time from the menu.</div>}
       </section>
