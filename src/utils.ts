@@ -15,6 +15,8 @@ export function makeDraft(type: DocumentType): DocumentDraft {
   return {
     type,
     date: today(),
+    useCustomNumber: false,
+    customNumber: '',
     customer: makeEmptyCustomer(),
     items:
       type === 'normal'
@@ -110,6 +112,8 @@ export function documentToDraft(document: BillingDocument): DocumentDraft {
   return {
     type: document.type,
     date: document.date,
+    useCustomNumber: false,
+    customNumber: '',
     customer: { ...document.customer },
     items:
       document.type === 'normal'
@@ -141,16 +145,21 @@ export function nextDailySequence(
   dailyCounters: Record<string, number> = {},
 ): number {
   const savedSequence = dailyCounters[date] ?? 0
-  const dateDocumentCount = documents.filter((document) => document.date === date).length
-  return Math.max(savedSequence, dateDocumentCount) + 1
+  const dateDocuments = documents.filter((document) => document.date === date)
+  const dateDocumentCount = dateDocuments.length
+  const numberPrefix = createDocumentNumber(date, 1).slice(0, 6)
+  const highestNumberedSequence = dateDocuments.reduce((highest, document) => {
+    const match = new RegExp(`^${numberPrefix}(\\d+)$`).exec(document.documentNumber)
+    return match ? Math.max(highest, Number(match[1])) : highest
+  }, 0)
+  return Math.max(savedSequence, dateDocumentCount, highestNumberedSequence) + 1
 }
 
 export function createDocumentNumber(date: string, sequence: number): string {
   const converted = nepaliDate(date)
   if (!converted) return 'Invalid date'
   const { year, month, date: dayOfMonth } = converted.getBS()
-  const fiscalYear = year + (month + 1 >= 4 ? 1 : 0)
-  return `${String(fiscalYear).slice(-2)}${String(month + 1).padStart(2, '0')}${String(dayOfMonth).padStart(2, '0')}${String(sequence).padStart(3, '0')}`
+  return `${String(year).slice(-2)}${String(month + 1).padStart(2, '0')}${String(dayOfMonth).padStart(2, '0')}${String(sequence).padStart(2, '0')}`
 }
 
 export function previewNumber(

@@ -67,6 +67,8 @@
 .field small { color: #777688; font-size: 11px; font-weight: 400; }
 .required-mark { color: #bd5660; }
 .read-value { height: 37px; display: flex; align-items: center; padding: 0 10px; border: 1px solid #eeeef2; border-radius: 6px; background: #fafafd; color: #716f84; font-size: 12px; }
+.custom-number-option { display: flex; align-items: center; gap: 6px; color: #69697b; font-size: 11px; font-weight: 500; }
+.custom-number-option input { width: 14px; height: 14px; margin: 0; accent-color: var(--purple); }
 .existing-customer select { max-width: 170px; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; color: #59586c; background: #fff; font-size: 11px; }
 .customer-select, .linked-bill-field, .notes-field { margin-top: 14px; }
 .text-button { display: inline-flex; gap: 5px; align-items: center; border: 0; color: var(--purple); background: transparent; font-size: 12px; font-weight: 600; }

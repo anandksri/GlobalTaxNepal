@@ -59,6 +59,8 @@ export type DraftItem = {
 export type DocumentDraft = {
   type: DocumentType
   date: string
+  useCustomNumber: boolean
+  customNumber: string
   customer: Customer
   items: DraftItem[]
   amount: string

@@ -98,6 +98,9 @@ function App() {
     let savedDocument: BillingDocument
     const reserveNumber = (existing?: BillingDocument) => {
       const dailyCounters = store.dailyCounters ?? {}
+      if (draft.useCustomNumber) {
+        return { documentNumber: draft.customNumber.trim(), dailyCounters }
+      }
       if (existing?.date === draft.date) {
         return { documentNumber: existing.documentNumber, dailyCounters }
       }
@@ -106,6 +109,18 @@ function App() {
         documentNumber: createDocumentNumber(draft.date, sequence),
         dailyCounters: { ...dailyCounters, [draft.date]: sequence },
       }
+    }
+    const validateNumber = (documentNumber: string) => {
+      if (!documentNumber) {
+        setNotice({ kind: 'error', text: 'Enter a bill number or use the automatically generated number.' })
+        return false
+      }
+      if (store.documents.some((document) =>
+        document.id !== editingId && document.documentNumber === documentNumber)) {
+        setNotice({ kind: 'error', text: `The bill number ${documentNumber} is already in use.` })
+        return false
+      }
+      return true
     }
 
     if (draft.type === 'normal') {
@@ -134,6 +149,7 @@ function App() {
       const now = new Date().toISOString()
       const counter = existing ? store.counters.normal : nextCounter('normal', store.documents, store.counters) + 1
       const numbering = reserveNumber(existing)
+      if (!validateNumber(numbering.documentNumber)) return
       savedDocument = {
         id: existing?.id ?? crypto.randomUUID(),
         type: 'normal',
@@ -168,6 +184,7 @@ function App() {
       const now = new Date().toISOString()
       const counter = existing ? store.counters[draft.type] : nextCounter(draft.type, store.documents, store.counters) + 1
       const numbering = reserveNumber(existing)
+      if (!validateNumber(numbering.documentNumber)) return
       const linkedBill = draft.linkedBillId
         ? store.documents.find((document): document is Extract<BillingDocument, { type: 'normal' }> =>
             document.type === 'normal' && document.id === draft.linkedBillId)

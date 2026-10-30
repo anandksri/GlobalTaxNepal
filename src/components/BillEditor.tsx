@@ -131,7 +131,11 @@ function DocumentPreview({
     ? Math.max(0, outstandingForBill(linkedBill, documents, existingDocument?.id) - (Number(draft.amount) || 0))
     : Number(draft.due) || 0
   const title = draft.type === 'normal' ? 'Normal Bill' : draft.type === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'
-  const docNo = existingDocument?.documentNumber ?? number
+  const docNo = draft.useCustomNumber
+    ? draft.customNumber
+    : existingDocument?.date === draft.date
+      ? existingDocument.documentNumber
+      : number
 
   return (
     <article className={`bill-paper ${draft.type !== 'normal' ? 'voucher-paper' : ''}`} id="document-preview">
@@ -213,6 +217,11 @@ export default function BillEditor({
     ? Math.max(0, outstandingForBill(linkedBill, documents, existingDocument?.id) - amount)
     : Number(draft.due) || 0
   const title = draft.type === 'normal' ? 'New normal bill' : draft.type === 'receipt' ? 'New receipt voucher' : 'New payment voucher'
+  const activeNumber = draft.useCustomNumber
+    ? draft.customNumber
+    : existingDocument?.date === draft.date
+      ? existingDocument.documentNumber
+      : number
 
   const updateCustomer = (customer: Customer) => set({ customer })
   const updateItem = (id: string, field: 'particular' | 'years' | 'rate', value: string) => {
@@ -231,7 +240,7 @@ export default function BillEditor({
           <div className="heading-title"><h1>{readOnly ? typeNames[draft.type] : title}</h1>{readOnly && <span className="status-pill">Saved</span>}</div>
           <p>{readOnly ? 'Review and print this saved document.' : 'Enter the details below. Your document is saved locally in this browser.'}</p>
         </div>
-        <div className="heading-document-number"><span>Document number</span><strong>{existingDocument?.documentNumber ?? number}</strong></div>
+        <div className="heading-document-number"><span>Document number</span><strong>{activeNumber}</strong></div>
       </div>
 
       <div className="editor-layout">
@@ -243,7 +252,30 @@ export default function BillEditor({
             </div>
             <div className="field-grid two-fields">
               <Field label="Date (A.D.)" value={draft.date} type="date" readOnly={readOnly} onChange={(value) => set({ date: value })} helper={`Nepali date (B.S.): ${formatNepaliDate(draft.date)}`} required />
-              <div className="field"><span>Bill number</span><div className="read-value">{numberToType(draft.type)}</div></div>
+              <div className="field">
+                <span>Bill number</span>
+                {draft.useCustomNumber ? (
+                  <input
+                    value={draft.customNumber}
+                    readOnly={readOnly}
+                    onChange={(event) => set({ customNumber: event.target.value })}
+                    aria-label="Custom bill number"
+                    required
+                  />
+                ) : <div className="read-value">{activeNumber}</div>}
+                {!readOnly && <label className="custom-number-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.useCustomNumber}
+                    onChange={(event) => set({
+                      useCustomNumber: event.target.checked,
+                      customNumber: event.target.checked ? activeNumber : '',
+                    })}
+                  />
+                  Use a custom bill number
+                </label>}
+                {!draft.useCustomNumber && <small className="field-helper">Automatically uses the Nepali date and daily sequence.</small>}
+              </div>
             </div>
           </section>
 
