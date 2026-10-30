@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowDownUp, CalendarDays, Download, Eye, FileClock, Pencil, Printer, Search, Trash2 } from 'lucide-react'
+import { ArrowDownUp, CalendarDays, Download, Eye, FileArchive, FileClock, Pencil, Printer, Search, Trash2, Upload } from 'lucide-react'
 import type { BillingDocument, DocumentType } from '../types'
 import { TYPE_LABELS } from '../types'
 import { formatNepaliDate } from '../dateUtils'
@@ -11,9 +11,11 @@ type Props = {
   onEdit: (document: BillingDocument) => void
   onDelete: (document: BillingDocument) => void
   onPrint: (document: BillingDocument) => void
+  onExportArchive: () => void
+  onImportArchive: (file: File) => void
 }
 
-export default function HistoryPage({ documents, onView, onEdit, onDelete, onPrint }: Props) {
+export default function HistoryPage({ documents, onView, onEdit, onDelete, onPrint, onExportArchive, onImportArchive }: Props) {
   const [query, setQuery] = useState('')
   const [type, setType] = useState<'all' | DocumentType>('all')
   const [fromDate, setFromDate] = useState('')
@@ -62,10 +64,25 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
       <section className="history-panel">
         <div className="history-toolbar">
           <label className="search-field"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, user ID or document no." aria-label="Search history" /></label>
-          <label className="filter-field"><span>Type</span><select value={type} onChange={(event) => setType(event.target.value as 'all' | DocumentType)}><option value="all">All documents</option><option value="normal">Normal bill</option><option value="receipt">Receipt bill</option><option value="payment">Payment bill</option></select></label>
+          <label className="filter-field"><span>Type</span><select value={type} onChange={(event) => setType(event.target.value as 'all' | DocumentType)}><option value="all">All documents</option><option value="normal">Normal bill</option><option value="receipt">Receipt bill</option><option value="payment">Payment bill</option><option value="details">Details bill</option></select></label>
           <label className="filter-field"><span>From (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} aria-label="Filter from date" /></span></label>
           <label className="filter-field"><span>To (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label="Filter to date" /></span></label>
           <label className="sort-field"><ArrowDownUp size={15} /><select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} aria-label="Sort history"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="number">Document number</option></select></label>
+          <div className="archive-actions">
+            <button type="button" className="archive-button" onClick={onExportArchive}><Download size={15} /> Export ZIP</button>
+            <label className="archive-button archive-upload"><Upload size={15} /> Import ZIP
+              <input
+                type="file"
+                accept=".zip,application/zip"
+                aria-label="Import ZIP archive"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0]
+                  if (file) onImportArchive(file)
+                  event.currentTarget.value = ''
+                }}
+              />
+            </label>
+          </div>
         </div>
         <div className="history-summary"><span>Showing <strong>{filtered.length}</strong> of {documents.length} documents</span><div><span>Total amount <strong>{money.format(totalAmount)}</strong></span><span>Total due <strong>{money.format(dueAmount)}</strong></span></div></div>
         {filtered.length ? (
@@ -97,7 +114,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
         ) : (
           <div className="empty-state"><span className="empty-icon"><FileClock size={23} /></span><h2>{documents.length ? 'No matching documents' : 'Nothing here just yet'}</h2><p>{documents.length ? 'Try a different search or widen the date range.' : 'Once you save a bill or voucher, you’ll find it here.'}</p></div>
         )}
-        {filtered.length > 0 && <div className="history-bottom"><Download size={14} /> Export a JSON backup any time from the menu.</div>}
+        <div className="history-bottom"><FileArchive size={14} /> ZIP includes a PDF for every saved document and backup.json for restoring the records. Passwords are included as plain text.</div>
       </section>
     </main>
   )

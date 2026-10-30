@@ -296,22 +296,54 @@ function App() {
     setNotice({ kind: 'success', text: 'Backup downloaded.' })
   }
 
+  const exportArchive = async () => {
+    try {
+      const { createDocumentsArchive } = await import('./archive')
+      const blob = await createDocumentsArchive(store)
+      const url = URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = `global-tax-nepal-archive-${new Date().toISOString().slice(0, 10)}.zip`
+      link.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setNotice({ kind: 'success', text: `ZIP archive downloaded with ${store.documents.length} PDF documents and a restore backup.` })
+    } catch {
+      setNotice({ kind: 'error', text: 'Could not create the ZIP archive. Check available memory and try again.' })
+    }
+  }
+
+  const restoreBackup = (parsed: unknown) => {
+    if (!isStoreData(parsed)) {
+      setNotice({ kind: 'error', text: 'This file is not a valid Global Tax Nepal billing backup.' })
+      return
+    }
+    if (!window.confirm(`Import ${parsed.documents.length} documents and replace the records in this browser?`)) return
+    if (persist({
+      ...parsed,
+      counters: { ...parsed.counters, details: parsed.counters.details ?? 0 },
+      dailyCounters: parsed.dailyCounters ?? {},
+      currency: 'NPR',
+    })) setNotice({ kind: 'success', text: `${parsed.documents.length} documents restored from backup.` })
+  }
+
   const importBackup = async (file: File) => {
     try {
       const parsed: unknown = JSON.parse(await file.text())
-      if (!isStoreData(parsed)) {
-        setNotice({ kind: 'error', text: 'This file is not a valid Global Tax Nepal billing backup.' })
-        return
-      }
-      if (!window.confirm(`Import ${parsed.documents.length} documents and replace the records in this browser?`)) return
-      if (persist({
-        ...parsed,
-        counters: { ...parsed.counters, details: parsed.counters.details ?? 0 },
-        dailyCounters: parsed.dailyCounters ?? {},
-        currency: 'NPR',
-      })) setNotice({ kind: 'success', text: `${parsed.documents.length} documents restored from backup.` })
+      restoreBackup(parsed)
     } catch {
       setNotice({ kind: 'error', text: 'The backup file could not be read. Choose a valid JSON backup.' })
+    }
+  }
+
+  const importArchive = async (file: File) => {
+    try {
+      const { readArchiveBackup } = await import('./archive')
+      restoreBackup(await readArchiveBackup(file))
+    } catch (error) {
+      setNotice({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'The ZIP archive could not be read.',
+      })
     }
   }
 
@@ -348,6 +380,8 @@ function App() {
           onEdit={(document) => openDocument(document, false)}
           onDelete={deleteDocument}
           onPrint={printSaved}
+          onExportArchive={exportArchive}
+          onImportArchive={importArchive}
         />
       ) : (
         <BillEditor
