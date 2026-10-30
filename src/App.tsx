@@ -28,6 +28,7 @@ function App() {
     normal: makeDraft('normal'),
     receipt: makeDraft('receipt'),
     payment: makeDraft('payment'),
+    details: makeDraft('details'),
   }))
   const [editingId, setEditingId] = useState<string | null>(null)
   const [readOnly, setReadOnly] = useState(false)
@@ -123,7 +124,47 @@ function App() {
       return true
     }
 
-    if (draft.type === 'normal') {
+    if (draft.type === 'details') {
+      if (!draft.customer.name.trim()) {
+        setNotice({ kind: 'error', text: 'Enter a name before saving this details bill.' })
+        return
+      }
+      const existing = currentDocument?.type === 'details' ? currentDocument : undefined
+      const now = new Date().toISOString()
+      const counter = existing
+        ? store.counters.details ?? 0
+        : nextCounter('details', store.documents, store.counters) + 1
+      const numbering = reserveNumber(existing)
+      if (!validateNumber(numbering.documentNumber)) return
+      savedDocument = {
+        id: existing?.id ?? crypto.randomUUID(),
+        type: 'details',
+        documentNumber: numbering.documentNumber,
+        date: draft.date,
+        customer: {
+          name: draft.customer.name.trim(),
+          address: '',
+          company: draft.customer.company.trim(),
+          phone: draft.customer.phone.trim(),
+          pan: '',
+          userId: draft.customer.userId?.trim() ?? '',
+        },
+        password: draft.password,
+        work: draft.work.trim(),
+        paymentStatus: draft.paymentStatus,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      }
+      const next: StoreData = {
+        ...store,
+        dailyCounters: numbering.dailyCounters,
+        documents: existing
+          ? store.documents.map((document) => document.id === existing.id ? savedDocument : document)
+          : [...store.documents, savedDocument],
+        counters: { ...store.counters, details: Math.max(store.counters.details ?? 0, counter) },
+      }
+      if (!persist(next)) return
+    } else if (draft.type === 'normal') {
       const populated = draft.items.filter((item) => item.particular.trim() || item.years !== '' || item.rate !== '')
       if (!populated.length) {
         setNotice({ kind: 'error', text: 'Add at least one bill item before saving.' })
@@ -180,7 +221,9 @@ function App() {
         setNotice({ kind: 'error', text: 'Due amount must be a valid non-negative number.' })
         return
       }
-      const existing = currentDocument && currentDocument.type !== 'normal' ? currentDocument : undefined
+      const existing = currentDocument && (currentDocument.type === 'receipt' || currentDocument.type === 'payment')
+        ? currentDocument
+        : undefined
       const now = new Date().toISOString()
       const counter = existing ? store.counters[draft.type] : nextCounter(draft.type, store.documents, store.counters) + 1
       const numbering = reserveNumber(existing)
@@ -192,7 +235,9 @@ function App() {
       const savedDue = linkedBill
         ? Math.max(0, linkedBill.items.reduce((sum, item) => sum + item.years * item.rate, 0) -
             store.documents.filter((document): document is TransactionDocument =>
-              document.id !== existing?.id && document.type !== 'normal' && document.linkedBillId === linkedBill.id,
+              document.id !== existing?.id &&
+              (document.type === 'receipt' || document.type === 'payment') &&
+              document.linkedBillId === linkedBill.id,
             ).reduce((sum, document) => sum + document.amount, 0) - amount)
         : due
       savedDocument = {
@@ -261,6 +306,7 @@ function App() {
       if (!window.confirm(`Import ${parsed.documents.length} documents and replace the records in this browser?`)) return
       if (persist({
         ...parsed,
+        counters: { ...parsed.counters, details: parsed.counters.details ?? 0 },
         dailyCounters: parsed.dailyCounters ?? {},
         currency: 'NPR',
       })) setNotice({ kind: 'success', text: `${parsed.documents.length} documents restored from backup.` })

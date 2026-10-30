@@ -15,6 +15,7 @@ const billOptions: { type: DocumentType; label: string }[] = [
   { type: 'normal', label: 'Normal Bill' },
   { type: 'receipt', label: 'Receipt Bill' },
   { type: 'payment', label: 'Payment Bill' },
+  { type: 'details', label: 'Details Bill' },
 ]
 
 export default function Header({ onNew, onHistory, onExport, onImport, activePage }: Props) {

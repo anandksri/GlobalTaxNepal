@@ -1,11 +1,12 @@
-import type { ChangeEvent } from 'react'
-import { Plus, Trash2, Printer, Download, Save, RotateCcw, ArrowLeft, Pencil } from 'lucide-react'
+import { useState, type ChangeEvent } from 'react'
+import { Plus, Trash2, Printer, Download, Save, RotateCcw, ArrowLeft, Pencil, Eye, EyeOff } from 'lucide-react'
 import type {
   BillingDocument,
   Customer,
   DocumentDraft,
   DocumentType,
   NormalDocument,
+  PaymentStatus,
 } from '../types'
 import { formatNepaliDate } from '../dateUtils'
 import { amountInWords, currencyFormatter, numberToType, outstandingForBill } from '../utils'
@@ -112,6 +113,92 @@ function CustomerFields({
   )
 }
 
+function DetailsFields({
+  customer,
+  password,
+  work,
+  paymentStatus,
+  readOnly,
+  onChange,
+  onPasswordChange,
+  onWorkChange,
+  onPaymentStatusChange,
+  existingCustomers,
+}: {
+  customer: Customer
+  password: string
+  work: string
+  paymentStatus: PaymentStatus
+  readOnly: boolean
+  onChange: (customer: Customer) => void
+  onPasswordChange: (password: string) => void
+  onWorkChange: (work: string) => void
+  onPaymentStatusChange: (status: PaymentStatus) => void
+  existingCustomers: Customer[]
+}) {
+  const [showPassword, setShowPassword] = useState(false)
+  const selectExisting = (event: ChangeEvent<HTMLSelectElement>) => {
+    const selected = existingCustomers[Number(event.target.value)]
+    if (selected) onChange({ ...selected })
+  }
+
+  return (
+    <section className="form-section">
+      <div className="section-heading">
+        <div><span className="section-kicker">02</span><h2>Client and work details</h2></div>
+        {existingCustomers.length > 0 && (
+          <label className="existing-customer">
+            <span className="sr-only">Select an existing customer</span>
+            <select disabled={readOnly} defaultValue="" onChange={selectExisting}>
+              <option value="">Existing customer</option>
+              {existingCustomers.map((person, index) => (
+                <option value={index} key={`${person.name}-${person.phone}-${index}`}>
+                  {person.name || person.company || `Customer ${index + 1}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+      <div className="field-grid">
+        <Field label="Name" value={customer.name} readOnly={readOnly} required onChange={(value) => onChange({ ...customer, name: value })} placeholder="Client name" />
+        <Field label="Company name" value={customer.company} readOnly={readOnly} onChange={(value) => onChange({ ...customer, company: value })} placeholder="Company name" />
+        <Field label="User ID" value={customer.userId ?? ''} readOnly={readOnly} onChange={(value) => onChange({ ...customer, userId: value })} placeholder="User ID" />
+        <Field label="Contact" value={customer.phone} readOnly={readOnly} onChange={(value) => onChange({ ...customer, phone: value })} placeholder="Contact number" />
+        <label className="field">
+          <span>Password</span>
+          <span className="password-input">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              readOnly={readOnly}
+              autoComplete="new-password"
+              onChange={(event) => onPasswordChange(event.target.value)}
+              placeholder="Password"
+            />
+            <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </span>
+          <small className="field-helper">Stored unencrypted in this browser and included in JSON backups.</small>
+        </label>
+        <label className="field">
+          <span>Payment status</span>
+          <select value={paymentStatus} disabled={readOnly} onChange={(event) => onPaymentStatusChange(event.target.value as PaymentStatus)}>
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </label>
+      </div>
+      <label className="field notes-field">
+        <span>Work</span>
+        <textarea rows={3} value={work} readOnly={readOnly} onChange={(event) => onWorkChange(event.target.value)} placeholder="Work or service details" />
+      </label>
+    </section>
+  )
+}
+
 function DocumentPreview({
   draft,
   number,
@@ -124,14 +211,20 @@ function DocumentPreview({
     : []
   const total = draft.type === 'normal'
     ? draft.items.reduce((sum, item) => sum + (Number(item.years) || 0) * (Number(item.rate) || 0), 0)
-    : Number(draft.amount) || 0
+    : draft.type === 'details' ? 0 : Number(draft.amount) || 0
   const linkedBill = documents.find(
     (document): document is NormalDocument => document.type === 'normal' && document.id === draft.linkedBillId,
   )
   const voucherDue = linkedBill
     ? Math.max(0, outstandingForBill(linkedBill, documents, existingDocument?.id) - (Number(draft.amount) || 0))
     : Number(draft.due) || 0
-  const title = draft.type === 'normal' ? 'Normal Bill' : draft.type === 'receipt' ? 'Receipt Voucher' : 'Payment Voucher'
+  const title = draft.type === 'normal'
+    ? 'Normal Bill'
+    : draft.type === 'receipt'
+      ? 'Receipt Voucher'
+      : draft.type === 'payment'
+        ? 'Payment Voucher'
+        : 'Details Bill'
   const docNo = draft.useCustomNumber
     ? draft.customNumber
     : existingDocument?.date === draft.date
@@ -139,7 +232,7 @@ function DocumentPreview({
       : number
 
   return (
-    <article className={`bill-paper ${draft.type !== 'normal' ? 'voucher-paper' : ''}`} id="document-preview">
+    <article className={`bill-paper ${draft.type === 'details' ? 'details-paper' : draft.type !== 'normal' ? 'voucher-paper' : ''}`} id="document-preview">
       <div className="paper-topline">
         <div className="paper-brand"><span className="paper-logo">GTN</span><div><h2>Global Tax Nepal</h2><p>Tax &amp; business services</p></div></div>
         <span className="paper-type">{title}</span>
@@ -150,13 +243,13 @@ function DocumentPreview({
       </div>
       <div className="paper-rule" />
       <div className="paper-customer">
-        <div><span className="paper-label">Billed to</span><strong>{draft.customer.name || 'Customer name'}</strong>
+        <div><span className="paper-label">{draft.type === 'details' ? 'Client details' : 'Billed to'}</span><strong>{draft.customer.name || 'Customer name'}</strong>
           {draft.customer.company && <span>{draft.customer.company}</span>}
           {draft.customer.address && <span>{draft.customer.address}</span>}
         </div>
         <div className="paper-contact">
           {draft.customer.phone && <span><b>Contact</b>{draft.customer.phone}</span>}
-          {draft.customer.pan && <span><b>PAN</b>{draft.customer.pan}</span>}
+          {draft.type !== 'details' && draft.customer.pan && <span><b>PAN</b>{draft.customer.pan}</span>}
           {draft.customer.userId && <span><b>User ID</b>{draft.customer.userId}</span>}
         </div>
       </div>
@@ -174,6 +267,12 @@ function DocumentPreview({
           <div className="paper-total"><span>Total</span><strong>{money.format(total)}</strong></div>
           <p className="amount-words"><span>Amount in words</span>{amountInWords(total)}</p>
         </>
+      ) : draft.type === 'details' ? (
+        <div className="details-preview">
+          <div><span>Work</span><strong>{draft.work || '—'}</strong></div>
+          <div><span>Password</span><strong>{draft.password || '—'}</strong></div>
+          <div><span>Payment status</span><strong>{draft.paymentStatus}</strong></div>
+        </div>
       ) : (
         <div className="voucher-amount-block">
           <span>{draft.type === 'receipt' ? 'Amount received' : 'Amount paid'}</span>
@@ -206,6 +305,7 @@ export default function BillEditor({
     normal: 'Normal bill',
     receipt: 'Receipt voucher',
     payment: 'Payment voucher',
+    details: 'Details bill',
   }
   const customers = documents.reduce<Customer[]>((all, document) => {
     const person = document.customer
@@ -218,7 +318,13 @@ export default function BillEditor({
   const calculatedDue = linkedBill
     ? Math.max(0, outstandingForBill(linkedBill, documents, existingDocument?.id) - amount)
     : Number(draft.due) || 0
-  const title = draft.type === 'normal' ? 'New normal bill' : draft.type === 'receipt' ? 'New receipt voucher' : 'New payment voucher'
+  const title = draft.type === 'normal'
+    ? 'New normal bill'
+    : draft.type === 'receipt'
+      ? 'New receipt voucher'
+      : draft.type === 'payment'
+        ? 'New payment voucher'
+        : 'New details bill'
   const activeNumber = draft.useCustomNumber
     ? draft.customNumber
     : existingDocument?.date === draft.date
@@ -281,7 +387,22 @@ export default function BillEditor({
             </div>
           </section>
 
-          <CustomerFields customer={draft.customer} readOnly={readOnly} onChange={updateCustomer} existingCustomers={customers} />
+          {draft.type === 'details' ? (
+            <DetailsFields
+              customer={draft.customer}
+              password={draft.password}
+              work={draft.work}
+              paymentStatus={draft.paymentStatus}
+              readOnly={readOnly}
+              onChange={updateCustomer}
+              onPasswordChange={(password) => set({ password })}
+              onWorkChange={(work) => set({ work })}
+              onPaymentStatusChange={(paymentStatus) => set({ paymentStatus })}
+              existingCustomers={customers}
+            />
+          ) : (
+            <CustomerFields customer={draft.customer} readOnly={readOnly} onChange={updateCustomer} existingCustomers={customers} />
+          )}
 
           {draft.type === 'normal' ? (
             <section className="form-section">
@@ -308,7 +429,7 @@ export default function BillEditor({
               </div>
               <div className="form-total"><span>Grand total</span><strong>{currencyFormatter().format(draft.items.reduce((sum, item) => sum + (Number(item.years) || 0) * (Number(item.rate) || 0), 0))}</strong></div>
             </section>
-          ) : (
+          ) : draft.type === 'details' ? null : (
             <section className="form-section">
               <div className="section-heading"><div><span className="section-kicker">02</span><h2>Payment details</h2></div></div>
               <div className="field-grid two-fields">
@@ -339,7 +460,7 @@ export default function BillEditor({
               <button type="button" className="button-primary" onClick={onEdit}><Pencil size={16} /> Edit document</button>
             ) : (
               <>
-                <button type="button" className="button-primary" onClick={onSave}><Save size={16} /> Save {draft.type === 'normal' ? 'bill' : draft.type}</button>
+                <button type="button" className="button-primary" onClick={onSave}><Save size={16} /> Save {draft.type === 'normal' || draft.type === 'details' ? 'bill' : draft.type}</button>
                 <button type="button" className="button-secondary" onClick={printDocument}><Printer size={16} /> Print</button>
                 <button type="button" className="button-secondary" onClick={printDocument}><Download size={16} /> Download PDF</button>
                 <button type="button" className="button-quiet" onClick={onClear}><RotateCcw size={15} /> Clear form</button>

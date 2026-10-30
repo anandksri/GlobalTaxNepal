@@ -31,13 +31,17 @@ export function makeDraft(type: DocumentType): DocumentDraft {
     due: '',
     notes: '',
     linkedBillId: '',
+    password: '',
+    work: '',
+    paymentStatus: 'Pending',
   }
 }
 
 export function documentTotal(document: BillingDocument): number {
-  return document.type === 'normal'
-    ? document.items.reduce((sum, item) => sum + item.years * item.rate, 0)
-    : document.amount
+  if (document.type === 'normal') {
+    return document.items.reduce((sum, item) => sum + item.years * item.rate, 0)
+  }
+  return document.type === 'details' ? 0 : document.amount
 }
 
 export function outstandingForBill(
@@ -48,7 +52,7 @@ export function outstandingForBill(
   const applied = documents
     .filter((document): document is TransactionDocument =>
       document.id !== excludeId &&
-      document.type !== 'normal' &&
+      (document.type === 'receipt' || document.type === 'payment') &&
       document.linkedBillId === bill.id)
     .reduce((sum, document) => sum + document.amount, 0)
   return Math.max(0, documentTotal(bill) - applied)
@@ -58,6 +62,7 @@ export function documentDue(
   document: BillingDocument,
   documents: BillingDocument[],
 ): number {
+  if (document.type === 'details') return 0
   if (document.type !== 'normal') return document.due
   return outstandingForBill(document, documents)
 }
@@ -123,10 +128,13 @@ export function documentToDraft(document: BillingDocument): DocumentDraft {
             rate: String(item.rate),
           }))
         : [],
-    amount: document.type === 'normal' ? '' : String(document.amount),
-    due: document.type === 'normal' ? '' : String(document.due),
-    notes: document.type === 'normal' ? '' : document.notes,
-    linkedBillId: document.type === 'normal' ? '' : document.linkedBillId,
+    amount: document.type === 'receipt' || document.type === 'payment' ? String(document.amount) : '',
+    due: document.type === 'receipt' || document.type === 'payment' ? String(document.due) : '',
+    notes: document.type === 'receipt' || document.type === 'payment' ? document.notes : '',
+    linkedBillId: document.type === 'receipt' || document.type === 'payment' ? document.linkedBillId : '',
+    password: document.type === 'details' ? document.password : '',
+    work: document.type === 'details' ? document.work : '',
+    paymentStatus: document.type === 'details' ? document.paymentStatus : 'Pending',
   }
 }
 
@@ -136,7 +144,7 @@ export function nextCounter(
   counters: StoreData['counters'],
 ): number {
   const existing = documents.filter((document) => document.type === type).length
-  return Math.max(counters[type], existing)
+  return Math.max(counters[type] ?? 0, existing)
 }
 
 export function nextDailySequence(
@@ -171,5 +179,5 @@ export function previewNumber(
 }
 
 export function numberToType(type: DocumentType): string {
-  return type === 'normal' ? 'Bill No. 1' : type === 'receipt' ? 'Bill No. 2' : 'Bill No. 3'
+  return type === 'normal' ? 'Bill No. 1' : type === 'receipt' ? 'Bill No. 2' : type === 'payment' ? 'Bill No. 3' : 'Bill No. 4'
 }

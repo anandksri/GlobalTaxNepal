@@ -64,6 +64,10 @@
 .field input::placeholder, .field textarea::placeholder, .item-editor-row input::placeholder { color: #b2b1bd; }
 .field input[readonly], .field textarea[readonly], .item-editor-row input[readonly] { color: #5b5a6e; background: #fafafd; }
 .field textarea { height: auto; padding: 9px 10px; resize: vertical; }
+.password-input { position: relative; display: flex; }
+.password-input input { padding-right: 38px; }
+.password-input button { position: absolute; top: 0; right: 0; width: 36px; height: 39px; display: grid; place-items: center; border: 0; color: #777688; background: transparent; }
+.password-input button:hover { color: var(--purple-dark); }
 .field small { color: #777688; font-size: 11px; font-weight: 400; }
 .required-mark { color: #bd5660; }
 .read-value { height: 37px; display: flex; align-items: center; padding: 0 10px; border: 1px solid #eeeef2; border-radius: 6px; background: #fafafd; color: #716f84; font-size: 12px; }
@@ -143,6 +147,10 @@
 .voucher-amount-block p { max-width: 100%; margin: 3px 0 0; color: #7f7d8f; text-align: center; font-size: 8px; }
 .voucher-amount-block p b { color: #646276; }
 .voucher-paper .paper-signatures { margin-top: 28px; }
+.details-preview { display: grid; gap: 12px; margin: 8px 0 20px; padding: 16px; border: 1px solid #efeff4; border-radius: 6px; background: #fcfcfe; }
+.details-preview > div { display: grid; grid-template-columns: minmax(100px, .35fr) minmax(0, 1fr); gap: 12px; font-size: 10px; }
+.details-preview span { color: #777688; }
+.details-preview strong { color: #49475c; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
 
 .history-page { padding-top: 40px; }
 .history-page .page-heading { align-items: center; margin-bottom: 22px; }
@@ -165,7 +173,7 @@
 .history-summary > div { display: flex; gap: 21px; }
 .history-summary > div span { display: flex; gap: 6px; align-items: center; }
 .table-scroll { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; }
-.history-table { width: 100%; min-width: 970px; border-collapse: collapse; }
+.history-table { width: 100%; min-width: 1170px; border-collapse: collapse; }
 .history-table th { padding: 11px 10px; background: #fafafd; color: #6f6e81; text-align: left; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .history-table td { padding: 11px 10px; border-top: 1px solid #f0f0f4; color: #666578; font-size: 11px; white-space: nowrap; }
 .history-table th:first-child, .history-table td:first-child { padding-left: 17px; }
@@ -176,6 +184,10 @@
 .table-type { padding: 4px 7px; border-radius: 20px; color: #51418e; background: #f1effa; font-size: 10px; }
 .type-receipt { color: #387c66; background: #edf7f2; }
 .type-payment { color: #9a6a38; background: #fbf3e8; }
+.type-details { color: #5b628e; background: #eef0fb; }
+.payment-status { padding: 4px 7px; border-radius: 20px; color: #8a6c38; background: #fbf5e8; font-size: 10px; }
+.status-paid { color: #387c66; background: #edf7f2; }
+.status-partial { color: #805c9a; background: #f4eff9; }
 .row-actions { display: flex; align-items: center; gap: 2px; }
 .row-actions button { width: 27px; height: 27px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 5px; color: #858495; background: transparent; }
 .row-actions button:hover { color: var(--purple-dark); background: #f4f2fb; }

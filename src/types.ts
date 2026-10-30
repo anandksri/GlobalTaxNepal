@@ -1,4 +1,5 @@
-export type DocumentType = 'normal' | 'receipt' | 'payment'
+export type DocumentType = 'normal' | 'receipt' | 'payment' | 'details'
+export type PaymentStatus = 'Pending' | 'Paid' | 'Partial'
 
 export type Customer = {
   name: string
@@ -40,12 +41,19 @@ export type TransactionDocument = DocumentBase & {
   linkedBillId: string
 }
 
-export type BillingDocument = NormalDocument | TransactionDocument
+export type DetailsDocument = DocumentBase & {
+  type: 'details'
+  password: string
+  work: string
+  paymentStatus: PaymentStatus
+}
+
+export type BillingDocument = NormalDocument | TransactionDocument | DetailsDocument
 
 export type StoreData = {
   version: 1
   documents: BillingDocument[]
-  counters: Record<DocumentType, number>
+  counters: Record<Exclude<DocumentType, 'details'>, number> & Partial<Record<'details', number>>
   dailyCounters?: Record<string, number>
   currency: string
 }
@@ -68,6 +76,9 @@ export type DocumentDraft = {
   due: string
   notes: string
   linkedBillId: string
+  password: string
+  work: string
+  paymentStatus: PaymentStatus
 }
 
 export const EMPTY_CUSTOMER: Customer = {
@@ -83,10 +94,12 @@ export const TYPE_LABELS: Record<DocumentType, string> = {
   normal: 'Normal Bill',
   receipt: 'Receipt Bill',
   payment: 'Payment Bill',
+  details: 'Details Bill',
 }
 
 export const TYPE_NUMBERS: Record<DocumentType, number> = {
   normal: 1,
   receipt: 2,
   payment: 3,
+  details: 4,
 }

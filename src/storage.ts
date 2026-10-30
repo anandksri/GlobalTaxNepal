@@ -10,7 +10,7 @@ const STORAGE_KEY = 'global-star-billing-v1'
 export const EMPTY_STORE: StoreData = {
   version: 1,
   documents: [],
-  counters: { normal: 0, receipt: 0, payment: 0 },
+  counters: { normal: 0, receipt: 0, payment: 0, details: 0 },
   dailyCounters: {},
   currency: 'NPR',
 }
@@ -51,6 +51,13 @@ function isDocument(value: unknown): value is BillingDocument {
       )
     )
   }
+  if (document.type === 'details') {
+    return (
+      typeof document.password === 'string' &&
+      typeof document.work === 'string' &&
+      ['Pending', 'Paid', 'Partial'].includes(String(document.paymentStatus))
+    )
+  }
   return (
     (document.type === 'receipt' || document.type === 'payment') &&
     Number.isFinite(document.amount) &&
@@ -72,6 +79,8 @@ export function isStoreData(value: unknown): value is StoreData {
     ['normal', 'receipt', 'payment'].every(
       (type) => Number.isInteger(counters[type]) && Number(counters[type]) >= 0,
     ) &&
+    (counters.details === undefined ||
+      (Number.isInteger(counters.details) && Number(counters.details) >= 0)) &&
     (store.dailyCounters === undefined ||
       (!!store.dailyCounters &&
         typeof store.dailyCounters === 'object' &&
@@ -95,7 +104,12 @@ export function loadStore(): { data: StoreData; error: string | null } {
       }
     }
     return {
-      data: { ...parsed, dailyCounters: parsed.dailyCounters ?? {}, currency: 'NPR' },
+      data: {
+        ...parsed,
+        counters: { ...parsed.counters, details: parsed.counters.details ?? 0 },
+        dailyCounters: parsed.dailyCounters ?? {},
+        currency: 'NPR',
+      },
       error: null,
     }
   } catch {

@@ -22,7 +22,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
   const money = currencyFormatter()
 
   const filtered = useMemo(() => documents.filter((document) => {
-    const searchText = `${document.documentNumber} ${document.customer.name} ${document.customer.company} ${document.customer.userId ?? ''}`.toLowerCase()
+    const searchText = `${document.documentNumber} ${document.customer.name} ${document.customer.company} ${document.customer.userId ?? ''} ${document.type === 'details' ? `${document.work} ${document.paymentStatus}` : ''}`.toLowerCase()
     return (
       (!query || searchText.includes(query.toLowerCase())) &&
       (type === 'all' || document.type === type) &&
@@ -41,12 +41,14 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
   for (const document of filtered) {
     if (document.type === 'normal') {
       dueByBill.set(document.id, documentDue(document, documents))
-    } else if (document.linkedBillId) {
-      const linkedBill = documents.find((item) => item.type === 'normal' && item.id === document.linkedBillId)
-      if (linkedBill) dueByBill.set(linkedBill.id, documentDue(linkedBill, documents))
-      else unlinkedDue += document.due
-    } else {
-      unlinkedDue += document.due
+    } else if (document.type !== 'details') {
+      if (document.linkedBillId) {
+        const linkedBill = documents.find((item) => item.type === 'normal' && item.id === document.linkedBillId)
+        if (linkedBill) dueByBill.set(linkedBill.id, documentDue(linkedBill, documents))
+        else unlinkedDue += document.due
+      } else {
+        unlinkedDue += document.due
+      }
     }
   }
   const dueAmount = [...dueByBill.values()].reduce((sum, due) => sum + due, unlinkedDue)
@@ -69,7 +71,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
         {filtered.length ? (
           <div className="table-scroll">
             <table className="history-table">
-              <thead><tr><th>Document no.</th><th>Bill type</th><th>Date</th><th>Customer</th><th>Company</th><th>Contact</th><th className="numeric">Total amount</th><th className="numeric">Due amount</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Document no.</th><th>Bill type</th><th>Date</th><th>Customer</th><th>Company</th><th>Contact</th><th>Work</th><th>Payment status</th><th className="numeric">Total amount</th><th className="numeric">Due amount</th><th>Actions</th></tr></thead>
               <tbody>{filtered.map((document) => (
                 <tr key={document.id}>
                   <td><button className="document-link" type="button" onClick={() => onView(document)}>{document.documentNumber}</button></td>
@@ -78,8 +80,10 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
                   <td>{document.customer.name || '—'}</td>
                   <td>{document.customer.company || '—'}</td>
                   <td>{document.customer.phone || '—'}</td>
-                  <td className="numeric">{money.format(documentTotal(document))}</td>
-                  <td className="numeric">{money.format(documentDue(document, documents))}</td>
+                  <td>{document.type === 'details' ? document.work || '—' : '—'}</td>
+                  <td>{document.type === 'details' ? <span className={`payment-status status-${document.paymentStatus.toLowerCase()}`}>{document.paymentStatus}</span> : '—'}</td>
+                  <td className="numeric">{document.type === 'details' ? '—' : money.format(documentTotal(document))}</td>
+                  <td className="numeric">{document.type === 'details' ? '—' : money.format(documentDue(document, documents))}</td>
                   <td><div className="row-actions">
                     <button type="button" title="View document" aria-label={`View ${document.documentNumber}`} onClick={() => onView(document)}><Eye size={15} /></button>
                     <button type="button" title="Edit document" aria-label={`Edit ${document.documentNumber}`} onClick={() => onEdit(document)}><Pencil size={15} /></button>
