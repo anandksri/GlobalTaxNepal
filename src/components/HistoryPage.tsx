@@ -22,7 +22,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
   const money = currencyFormatter()
 
   const filtered = useMemo(() => documents.filter((document) => {
-    const searchText = `${document.documentNumber} ${document.customer.name} ${document.customer.company}`.toLowerCase()
+    const searchText = `${document.documentNumber} ${document.customer.name} ${document.customer.company} ${document.customer.userId ?? ''}`.toLowerCase()
     return (
       (!query || searchText.includes(query.toLowerCase())) &&
       (type === 'all' || document.type === type) &&
@@ -59,7 +59,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
       </div>
       <section className="history-panel">
         <div className="history-toolbar">
-          <label className="search-field"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company or document no." aria-label="Search history" /></label>
+          <label className="search-field"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, user ID or document no." aria-label="Search history" /></label>
           <label className="filter-field"><span>Type</span><select value={type} onChange={(event) => setType(event.target.value as 'all' | DocumentType)}><option value="all">All documents</option><option value="normal">Normal bill</option><option value="receipt">Receipt bill</option><option value="payment">Payment bill</option></select></label>
           <label className="filter-field"><span>From (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} aria-label="Filter from date" /></span></label>
           <label className="filter-field"><span>To (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label="Filter to date" /></span></label>

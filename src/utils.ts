@@ -114,7 +114,7 @@ export function documentToDraft(document: BillingDocument): DocumentDraft {
     date: document.date,
     useCustomNumber: false,
     customNumber: '',
-    customer: { ...document.customer },
+    customer: { ...document.customer, userId: document.customer.userId ?? '' },
     items:
       document.type === 'normal'
         ? document.items.map((item) => ({

@@ -18,8 +18,11 @@ export const EMPTY_STORE: StoreData = {
 function isCustomer(value: unknown): value is Customer {
   if (!value || typeof value !== 'object') return false
   const customer = value as Record<string, unknown>
-  return ['name', 'address', 'company', 'phone', 'pan'].every(
-    (key) => typeof customer[key] === 'string',
+  return (
+    ['name', 'address', 'company', 'phone', 'pan'].every(
+      (key) => typeof customer[key] === 'string',
+    ) &&
+    (customer.userId === undefined || typeof customer.userId === 'string')
   )
 }
 

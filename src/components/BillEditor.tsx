@@ -106,6 +106,7 @@ function CustomerFields({
         <Field label="Company name" value={customer.company} readOnly={readOnly} onChange={(value) => set('company', value)} placeholder="Company (optional)" />
         <Field label="Contact number" value={customer.phone} readOnly={readOnly} onChange={(value) => set('phone', value)} placeholder="98XXXXXXXX" />
         <Field label="PAN number" value={customer.pan} readOnly={readOnly} onChange={(value) => set('pan', value)} placeholder="PAN (optional)" />
+        <Field label="User ID" value={customer.userId ?? ''} readOnly={readOnly} onChange={(value) => set('userId', value)} placeholder="User ID (optional)" />
       </div>
     </section>
   )
@@ -156,6 +157,7 @@ function DocumentPreview({
         <div className="paper-contact">
           {draft.customer.phone && <span><b>Contact</b>{draft.customer.phone}</span>}
           {draft.customer.pan && <span><b>PAN</b>{draft.customer.pan}</span>}
+          {draft.customer.userId && <span><b>User ID</b>{draft.customer.userId}</span>}
         </div>
       </div>
       {draft.type === 'normal' ? (

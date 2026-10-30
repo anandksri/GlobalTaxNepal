@@ -6,6 +6,7 @@ export type Customer = {
   company: string
   phone: string
   pan: string
+  userId?: string
 }
 
 export type BillItem = {
@@ -75,6 +76,7 @@ export const EMPTY_CUSTOMER: Customer = {
   company: '',
   phone: '',
   pan: '',
+  userId: '',
 }
 
 export const TYPE_LABELS: Record<DocumentType, string> = {
