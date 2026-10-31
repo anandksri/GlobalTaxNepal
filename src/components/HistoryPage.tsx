@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ArrowDownUp, CalendarDays, Download, Eye, FileArchive, FileClock, Pencil, Printer, Search, Trash2, Upload } from 'lucide-react'
 import type { BillingDocument, DocumentType } from '../types'
 import { TYPE_LABELS } from '../types'
-import { formatNepaliDate } from '../dateUtils'
+import { formatNepaliDate, gregorianDateFromNepali } from '../dateUtils'
 import { currencyFormatter, documentDue, documentTotal } from '../utils'
 
 type Props = {
@@ -20,6 +20,8 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
   const [type, setType] = useState<'all' | DocumentType>('all')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [fromDateText, setFromDateText] = useState('')
+  const [toDateText, setToDateText] = useState('')
   const [sort, setSort] = useState<'newest' | 'oldest' | 'number'>('newest')
   const money = currencyFormatter()
 
@@ -65,8 +67,8 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
         <div className="history-toolbar">
           <label className="search-field"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, user ID or document no." aria-label="Search history" /></label>
           <label className="filter-field"><span>Type</span><select value={type} onChange={(event) => setType(event.target.value as 'all' | DocumentType)}><option value="all">All documents</option><option value="normal">Normal bill</option><option value="receipt">Receipt bill</option><option value="payment">Payment bill</option><option value="details">Details bill</option></select></label>
-          <label className="filter-field"><span>From (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} aria-label="Filter from date" /></span></label>
-          <label className="filter-field"><span>To (A.D.)</span><span className="date-filter"><CalendarDays size={15} /><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label="Filter to date" /></span></label>
+          <label className="filter-field"><span>From (B.S.)</span><span className="date-filter"><CalendarDays size={15} /><input type="text" placeholder="YYYY/MM/DD" value={fromDateText} onChange={(event) => { setFromDateText(event.target.value); setFromDate(gregorianDateFromNepali(event.target.value) ?? '') }} aria-label="Filter from date in B.S." /></span></label>
+          <label className="filter-field"><span>To (B.S.)</span><span className="date-filter"><CalendarDays size={15} /><input type="text" placeholder="YYYY/MM/DD" value={toDateText} onChange={(event) => { setToDateText(event.target.value); setToDate(gregorianDateFromNepali(event.target.value) ?? '') }} aria-label="Filter to date in B.S." /></span></label>
           <label className="sort-field"><ArrowDownUp size={15} /><select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} aria-label="Sort history"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="number">Document number</option></select></label>
           <div className="archive-actions">
             <button type="button" className="archive-button" onClick={onExportArchive}><Download size={15} /> Export ZIP</button>
@@ -93,7 +95,7 @@ export default function HistoryPage({ documents, onView, onEdit, onDelete, onPri
                 <tr key={document.id}>
                   <td><button className="document-link" type="button" onClick={() => onView(document)}>{document.documentNumber}</button></td>
                   <td><span className={`table-type type-${document.type}`}>{TYPE_LABELS[document.type]}</span></td>
-                  <td title={`A.D. ${document.date}`}>{formatNepaliDate(document.date)}</td>
+                  <td>{formatNepaliDate(document.date)}</td>
                   <td>{document.customer.name || '—'}</td>
                   <td>{document.customer.company || '—'}</td>
                   <td>{document.customer.phone || '—'}</td>

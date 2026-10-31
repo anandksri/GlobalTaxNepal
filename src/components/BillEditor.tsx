@@ -8,7 +8,7 @@ import type {
   NormalDocument,
   PaymentStatus,
 } from '../types'
-import { formatNepaliDate } from '../dateUtils'
+import { formatNepaliDate, gregorianDateFromNepali, isValidGregorianDate } from '../dateUtils'
 import { amountInWords, currencyFormatter, numberToType, outstandingForBill } from '../utils'
 
 type Props = {
@@ -62,6 +62,50 @@ function Field({
         required={required}
       />
       {helper && <small className="field-helper">{helper}</small>}
+    </label>
+  )
+}
+
+function NepaliDateField({
+  value,
+  readOnly,
+  onChange,
+}: {
+  value: string
+  readOnly: boolean
+  onChange: (value: string) => void
+}) {
+  const [dateEntry, setDateEntry] = useState(() => {
+    const formattedDate = formatNepaliDate(value)
+    return { sourceValue: value, text: formattedDate === '—' ? '' : formattedDate }
+  })
+  const dateText = dateEntry.sourceValue === value
+    ? dateEntry.text
+    : isValidGregorianDate(value)
+      ? formatNepaliDate(value)
+      : ''
+
+  const updateDate = (nextDate: string) => {
+    const convertedDate = gregorianDateFromNepali(nextDate)
+    setDateEntry({
+      sourceValue: convertedDate ?? '',
+      text: convertedDate ? formatNepaliDate(convertedDate) : nextDate,
+    })
+    onChange(convertedDate ?? '')
+  }
+
+  return (
+    <label className="field">
+      <span>Date (B.S.)<span className="required-mark"> *</span></span>
+      <input
+        type="text"
+        value={dateText}
+        readOnly={readOnly}
+        onChange={(event) => updateDate(event.target.value)}
+        placeholder="YYYY/MM/DD"
+        required
+      />
+      <small className="field-helper">Enter the date in Nepali calendar format (YYYY/MM/DD).</small>
     </label>
   )
 }
@@ -359,7 +403,7 @@ export default function BillEditor({
               <span className="type-chip">{numberToType(draft.type)}</span>
             </div>
             <div className="field-grid two-fields">
-              <Field label="Date (A.D.)" value={draft.date} type="date" readOnly={readOnly} onChange={(value) => set({ date: value })} helper={`Nepali date (B.S.): ${formatNepaliDate(draft.date)}`} required />
+              <NepaliDateField value={draft.date} readOnly={readOnly} onChange={(value) => set({ date: value })} />
               <div className="field">
                 <span>Bill number</span>
                 {draft.useCustomNumber ? (

@@ -40,7 +40,6 @@ function documentPdf(document: BillingDocument, allDocuments: BillingDocument[])
   y += 8
   addText(document.type === 'details' ? 'Details Bill' : document.type === 'normal' ? 'Normal Bill' : document.type === 'receipt' ? 'Receipt Bill' : 'Payment Bill', true)
   addField('Document number', document.documentNumber)
-  addField('Date (A.D.)', document.date)
   addField('Date (B.S.)', formatNepaliDate(document.date))
   y += 3
   addText('CLIENT DETAILS', true)
